@@ -2,16 +2,23 @@ import "./scss/styles.scss";
 import "./components/models/Basket.ts";
 import "./components/models/Buyer.ts";
 import "./components/models/ProductCatalog.ts";
-import { apiProducts } from "./utils/data.ts";
 import { ProductCatalog } from "./components/models/ProductCatalog.ts";
 import { Basket } from "./components/models/Basket.ts";
 import { Buyer } from "./components/models/Buyer.ts";
-import { IGetProducts } from "./types/index.ts";
+import { IGetProducts, IProduct } from "./types/index.ts";
 import { CommunicationLayout } from "./components/communication/Layout.ts";
 import { Api } from "./components/base/Api.ts";
-import { API_URL } from "../src/utils/constants.ts";
+import { API_URL, CDN_URL, categoryMap } from "../src/utils/constants.ts";
+import { Header, IHeader } from "./components/view/Header.ts";
+import { EventEmitter } from "./components/base/Events.ts";
+import { Modal } from "./components/view/Modal.ts";
+import { GalleryCard } from "./components/view/GalleryCard.ts";
+import { Gallery } from "./components/view/Gallery.ts";
+import { cloneTemplate, createElement } from "./utils/utils.ts";
+import { OrderSuccess } from "./components/view/Order-success.ts";
+import { Card } from "./components/view/Card.ts";
 
-const productsModel = new ProductCatalog();
+/*const productsModel = new ProductCatalog();
 productsModel.setProductArray(apiProducts.items);
 console.log("Массив товаров из каталога: ", productsModel.getProductArray());
 console.log(
@@ -84,4 +91,92 @@ communication
   })
   .catch((error) => {
     console.error("Ошибка:", error);
+  });*/
+
+// Инициализация приложения
+
+const gallery = document.getElementById("gallery") as HTMLElement;
+
+const productApi = new Api(API_URL);
+const communication = new CommunicationLayout(productApi);
+const events = new EventEmitter();
+const modalElement = document.getElementById("modal-container") as HTMLElement;
+const headerElement = document.querySelector(".header") as HTMLElement;
+
+const header = new Header(events, headerElement);
+const modal = new Modal(events, modalElement);
+
+const successTemplate = document.getElementById(
+  "success"
+) as HTMLTemplateElement;
+const successContent = successTemplate.content.cloneNode(
+  true
+) as DocumentFragment;
+const successElement = successContent.firstElementChild as HTMLElement;
+const orderSuccess = new OrderSuccess(events, successElement);
+
+const pageGallery = new Gallery(gallery);
+
+header.counter = 5;
+
+//тестирование открытия корзины
+/*events.on('basket:open', () => {
+        modalElement.classList.add('modal_active');
+        const modalcont = createElement('div');
+        modalcont.innerHTML = '<div> Проверка выполнена </div>';
+        modal.content = modalcont;
+    })*/
+
+events.on("modal:close", () => {
+  modalElement.classList.remove("modal_active");
+});
+
+events.on("order:close", () => {
+  modalElement.classList.remove("modal_active");
+});
+
+//тестирование формы завершения оформления зааза
+/*
+    orderSuccess.totalCost = 1250;
+
+    events.on('basket:open', () => {
+        modalElement.classList.add('modal_active');
+        modal.content = orderSuccess.render();
+    })*/
+
+const cardGalleryTemplate = document.getElementById("card-catalog") as HTMLTemplateElement;
+
+
+const productsList = new ProductCatalog();
+communication
+  .getProductList()
+  .then((response) => {
+    productsList.setProductArray(response.items);
+    console.log(productsList.getProductArray())
+    makeGalery();
+
+  })
+  .catch((error) => {
+    console.error("Ошибка:", error);
   });
+
+function makeGalery () {
+  productsList.getProductArray().forEach((item) => {
+    const cardTemplateClone = cardGalleryTemplate.content.cloneNode(true) as HTMLElement;
+    console.log(cardTemplateClone)
+    const cardGallery = new GalleryCard(cardTemplateClone, {
+      onClick: () => {
+        console.log("Клик сработал!");
+        events.emit("card:select")
+      }
+    });
+    pageGallery.addItem(cardGallery.render(item));
+  });
+}
+
+events.on("card:select", (item) => {
+  console.log('card:select', item);
+  modalElement.classList.add('modal_active');
+})
+
+
