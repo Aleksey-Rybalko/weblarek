@@ -1,19 +1,19 @@
 import { ensureElement } from "../../utils/utils";
 import { Card } from "./Card";
-import { IEvents } from "../base/Events";
+
+interface ICardAction {
+  onClick?: (event: MouseEvent) => void;
+}
 
 export interface ICardBasket {
-  titleCard: string;
-  priceCard: number;
   cardIndex: number;
 }
 
 export class CardBasket extends Card {
-  protected btnDeleteCard: HTMLButtonElement
-  protected itemCard: HTMLElement
-  protected index: number;
+  protected btnDeleteCard: HTMLButtonElement;
+  protected index: HTMLElement;
 
-  constructor(protected events: IEvents, container: HTMLElement) {
+  constructor(container: HTMLElement, action?: ICardAction) {
     super(container);
 
     this.btnDeleteCard = ensureElement<HTMLButtonElement>(
@@ -21,18 +21,17 @@ export class CardBasket extends Card {
       this.container
     );
 
-    this.itemCard = ensureElement<HTMLButtonElement>(
-      ".basket__item",
+    this.index = ensureElement<HTMLElement>(
+      ".basket__item-index",
       this.container
     );
-    this.index = 0;
 
-    this.btnDeleteCard.addEventListener("click", () => {
-      this.events.emit("basket:delete");
-    });
+    if (action?.onClick) {
+      this.btnDeleteCard.addEventListener("click", action.onClick);
+    }
   }
 
-  set cardIndex (value: number) {
-    this.index = value;
+  set updateCardIndex(value: number) {
+    this.index.textContent = String(value);
   }
 }

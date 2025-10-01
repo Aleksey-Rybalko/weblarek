@@ -2,10 +2,9 @@ import { Component } from "../base/Component";
 import { ensureElement } from "../../utils/utils";
 
 export interface ICard {
-    title: string;
-    price: number | null;
+  title: string;
+  price: number | null;
 }
-
 
 export class Card extends Component<ICard> {
   titleCard: HTMLElement;
@@ -13,8 +12,8 @@ export class Card extends Component<ICard> {
 
   constructor(container: HTMLElement) {
     super(container);
-    this.titleCard = ensureElement<HTMLElement>('.card__title', this.container);
-    this.priceCard = ensureElement<HTMLElement>('.card__price', this.container);
+    this.titleCard = ensureElement<HTMLElement>(".card__title", this.container);
+    this.priceCard = ensureElement<HTMLElement>(".card__price", this.container);
   }
 
   set title(value: string) {
@@ -22,8 +21,10 @@ export class Card extends Component<ICard> {
   }
 
   set price(value: number | null) {
-    if (value){
+    if (value) {
       this.priceCard.textContent = `${value} синапсов`;
-    }  else  {this.priceCard.textContent = `Бесценно`;}  
+    } else {
+      this.priceCard.textContent = `Бесценно`;
+    }
   }
 }

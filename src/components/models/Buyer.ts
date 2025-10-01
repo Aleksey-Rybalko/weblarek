@@ -1,8 +1,9 @@
 import { IBuyer, IPayment } from "../../types/index.ts";
+import { IEvents } from "../base/Events.ts";
 
 export class Buyer {
   private _buyer: IBuyer = {
-    payment: "Online",
+    payment: undefined,
     email: "",
     phone: "",
     address: "",
@@ -30,75 +31,70 @@ export class Buyer {
 
   clearData(): void {
     this._buyer = {
-      payment: "Online",
+      payment: undefined,
       email: "",
       phone: "",
       address: "",
     };
   }
 
-  validation(): {
-    stateValidationEmail: boolean;
-    validationErrorsEmail: string;
-    stateValidationPhone: boolean;
-    validationErrorsPhone: string;
-    stateValidationAddress: boolean;
-    validationErrorsAddress: string;
-    stateValidationPayment: boolean;
-    validationErrorsPayment: string;
+  getvalidation(): {
+    payment: string;
+    address: string;
+    phone: string;
+    email: string;
   } {
     const validationResult: {
-      stateValidationEmail: boolean;
-      validationErrorsEmail: string;
-      stateValidationPhone: boolean;
-      validationErrorsPhone: string;
-      stateValidationAddress: boolean;
-      validationErrorsAddress: string;
-      stateValidationPayment: boolean;
-      validationErrorsPayment: string;
+      payment: string;
+      address: string;
+      phone: string;
+      email: string;
     } = {
-      stateValidationEmail: true,
-      validationErrorsEmail: "",
-      stateValidationPhone: true,
-      validationErrorsPhone: "",
-      stateValidationAddress: true,
-      validationErrorsAddress: "",
-      stateValidationPayment: true,
-      validationErrorsPayment: "",
+      payment: "",
+      address: "",
+      phone: "",
+      email: "",
     };
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const phoneRegex =
-      /^(\+7|8)[\s\-]?\(?\d{3}\)?[\s\-]?\d{3}[\s\-]?\d{2}[\s\-]?\d{2}$/;
-
-    if (
-      !this._buyer.email ||
-      (this._buyer.email && !emailRegex.test(this._buyer.email))
-    ) {
-      validationResult.stateValidationEmail = false;
-      validationResult.validationErrorsEmail +=
-        " email отсутствует или не соответствует формату;  ";
-    }
-
-    if (
-      !this._buyer.phone ||
-      (this._buyer.phone && !phoneRegex.test(this._buyer.phone))
-    ) {
-      validationResult.stateValidationPhone = false;
-      validationResult.validationErrorsPhone +=
-        " номер телефона отсутствует или не соответствует формату;  ";
-    }
-
-    if (!this._buyer.address) {
-      validationResult.stateValidationAddress = false;
-      validationResult.validationErrorsAddress += " адрес отсутствует;  ";
-    }
-
-    if (!this._buyer.payment) {
-      validationResult.stateValidationPayment = false;
-      validationResult.validationErrorsPayment += " тип оплаты не указан;  ";
-    }
+    this._buyer.email === ""
+      ? (validationResult.email = "Не задан Email")
+      : (validationResult.email = "");
+    this._buyer.address === ""
+      ? (validationResult.address = "Не задан Адрес")
+      : (validationResult.address = "");
+    this._buyer.phone === ""
+      ? (validationResult.phone = "Не задан Телефон")
+      : (validationResult.phone = "");
+    this._buyer.payment === undefined
+      ? (validationResult.payment = "Не выбран тип оплаты")
+      : (validationResult.payment = "");
 
     return validationResult;
+  }
+}
+
+export class BuyerWhithEvent extends Buyer {
+  constructor(private events: IEvents) {
+    super();
+  }
+
+  setBuyerAddress(address: string): void {
+    super.setBuyerAddress(address);
+    this.events.emit("validationSalary:start");
+  }
+
+  setBuyerEmail(email: string): void {
+    super.setBuyerEmail(email);
+    this.events.emit("validationContact:start");
+  }
+
+  setBuyerPhone(phone: string): void {
+    super.setBuyerPhone(phone);
+    this.events.emit("validationContact:start");
+  }
+
+  setBuyerPayment(payment: IPayment): void {
+    super.setBuyerPayment(payment);
+    this.events.emit("validationSalary:start");
   }
 }

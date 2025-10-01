@@ -18,7 +18,7 @@ export interface IProduct {
   price: number | null;
 }
 
-export type IPayment = "Online" | "Offline";
+export type IPayment = "card" | "cash" | undefined;
 
 export interface IBuyer {
   payment: IPayment;

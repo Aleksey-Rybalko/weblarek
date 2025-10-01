@@ -15,32 +15,31 @@ export class GalleryCard extends Card {
   protected categoryCard: HTMLElement;
   protected imageCard: HTMLImageElement;
 
-  actionclick (action?:ICardAction){
-  if (action?.onClick) {
-      this.container.addEventListener('click', action.onClick);
-      console.log('OK')
-    }
-     }
-
-  constructor(container: HTMLElement, action?:ICardAction) {
+  constructor(container: HTMLElement, action?: ICardAction) {
     super(container);
 
-    this.categoryCard = ensureElement<HTMLElement>('.card__category',this.container);
-    this.imageCard = ensureElement<HTMLImageElement>('.card__image',this.container);
-    this.actionclick(action);
-        
+    this.categoryCard = ensureElement<HTMLElement>(
+      ".card__category",
+      this.container
+    );
+    this.imageCard = ensureElement<HTMLImageElement>(
+      ".card__image",
+      this.container
+    );
+    if (action?.onClick) {
+      this.container.addEventListener("click", action.onClick);
+    }
   }
-  
-  set category (value:string) {
-    this.categoryCard.className = '';
+
+  set category(value: string) {
+    this.categoryCard.className = "";
     this.categoryCard.className = `card__category ${
-        categoryMap[value as keyof typeof categoryMap]
-      }`;
+      categoryMap[value as keyof typeof categoryMap]
+    }`;
     this.categoryCard.textContent = value;
   }
 
   set image(value: string) {
     this.setImage(this.imageCard, CDN_URL + value, this.title);
   }
-
 }

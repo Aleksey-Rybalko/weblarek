@@ -1,4 +1,5 @@
 import { IProduct } from "../../types/index.ts";
+import { IEvents } from "../base/Events.ts";
 
 export class ProductCatalog {
   protected productArray: IProduct[] = [];
@@ -22,5 +23,16 @@ export class ProductCatalog {
 
   getActiveProduct(): IProduct | null {
     return this.activeProduct;
+  }
+}
+
+export class EventsProductCatalog extends ProductCatalog {
+  constructor(private events: IEvents) {
+    super();
+  }
+
+  setProductArray(productArray: IProduct[]): void {
+    super.setProductArray(productArray);
+    this.events.emit("products:changed", this.productArray);
   }
 }
