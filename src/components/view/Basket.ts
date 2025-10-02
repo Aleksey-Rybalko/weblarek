@@ -1,4 +1,4 @@
-import { ensureElement } from "../../utils/utils";
+import { createElement, ensureElement } from "../../utils/utils";
 import { Component } from "../base/Component";
 import { IEvents } from "../base/Events";
 
@@ -11,6 +11,7 @@ export class Basket extends Component<IBasket> {
   protected btnExecute: HTMLButtonElement;
   protected cost: HTMLElement;
   protected basketList: HTMLElement;
+  protected basketclear:HTMLElement;
 
   constructor(protected events: IEvents, container: HTMLElement) {
     super(container);
@@ -25,8 +26,13 @@ export class Basket extends Component<IBasket> {
       this.container
     );
 
+    this.basketList.style.overflow = 'auto';
+    this.basketList.style.maxHeight = '600px'
+    this.basketclear = createElement("p");
+    this.basketclear.innerHTML = "корзина пуста";
+
     this.btnExecute.addEventListener("click", () => {
-      this.events.emit("orderSalary:input");
+      this.events.emit("modalSalary:open");
     });
   }
 
@@ -48,5 +54,9 @@ export class Basket extends Component<IBasket> {
     } else {
       this.btnExecute.disabled = false;
     }
+  }
+
+  getEmptyBasket (): HTMLElement {
+    return this.basketclear;
   }
 }

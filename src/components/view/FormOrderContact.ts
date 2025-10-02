@@ -22,11 +22,11 @@ export class FormOrderContact extends FormOrder {
       this.container
     );
 
-    this.emailInput.addEventListener("change", () => {
+    this.emailInput.addEventListener("input", () => {
       events.emit("order:emailChange", this.container);
     });
 
-    this.phoneInput.addEventListener("change", () => {
+    this.phoneInput.addEventListener("input", () => {
       events.emit("order:phoneChange", this.container);
     });
 

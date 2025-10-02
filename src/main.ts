@@ -14,7 +14,7 @@ import { EventEmitter } from "./components/base/Events.ts";
 import { Modal } from "./components/view/Modal.ts";
 import { GalleryCard } from "./components/view/GalleryCard.ts";
 import { Gallery } from "./components/view/Gallery.ts";
-import { cloneTemplate, createElement } from "./utils/utils.ts";
+import { cloneTemplate } from "./utils/utils.ts";
 import { OrderSuccess } from "./components/view/Order-success.ts";
 import { CardFull } from "./components/view/CardFull.ts";
 import { CardBasket } from "./components/view/CardBasket.ts";
@@ -79,7 +79,7 @@ communication
   });
 
 events.on("modal:close", () => {
-  modalElement.classList.remove("modal_active");
+  modal.close();
   header.counter = basketModel.getCount();
   modal.clear();
 });
@@ -91,6 +91,7 @@ events.on("products:changed", () => {
     const cardTemplateClone = cloneTemplate(cardGalleryTemplate);
     const cardGallery = new GalleryCard(cardTemplateClone, {
       onClick: () => {
+        productsList.setActiveProduct(item);
         events.emit("card:select", item);
       },
     });
@@ -100,20 +101,26 @@ events.on("products:changed", () => {
 
 events.on("card:select", (item) => {
   modal.clear();
-  const isInBasket: boolean =  "id" in item && !basketModel.hasProduct(String(item.id));
+  const activeProduct = productsList.getActiveProduct();
+   if (!activeProduct) return;
+  const isInBasket: boolean =  !basketModel.hasProduct(activeProduct.id);
+  const isAvailable = activeProduct.price !== null;
   const fullCardTemplate = cloneTemplate(fullCardContainer);
   const fullCard = new CardFull(fullCardTemplate, {
     onClick: () => {
-      if (isInBasket) {
-        events.emit("basket:addProduct", item);
-      } else {
-        events.emit("basket:removeProductFromCard", item);
+      if (isAvailable) {
+        if (isInBasket) {
+          events.emit("basket:addProduct", activeProduct);
+        } else {
+          events.emit("basket:removeProduct", activeProduct);
+          events.emit("modal:close");
+        }
       }
     },
   });
   fullCard.namingBtn = isInBasket ? "Купить" : "Удалить из корзины";
-  if ("price" in item && item.price === null) fullCard.deactivationBtn();
-  modalElement.classList.add("modal_active");
+  if (!isAvailable) fullCard.deactivationBtn();
+  modal.open();
   modal.content = fullCard.render(item);
 });
 
@@ -121,11 +128,7 @@ events.on("basket:addProduct", (item) => {
   basketModel.setProductInBasket(item as IProduct);
 });
 
-events.on("basket:removeProductFromCard", (item) => {
-  basketModel.deleteProductFromCard(item as IProduct);
-});
-
-events.on("basket:removeProductFromBasket", (item) => {
+events.on("basket:removeProduct", (item) => {
   basketModel.deleteProductFromBasket(item as IProduct);
 });
 
@@ -134,9 +137,7 @@ events.on("basket:changed", () => {
   modal.clear();
   basket.totalCost = basketModel.getCost();
   if (basketModel.getCount() === 0) {
-    const basketclear = createElement("div");
-    basketclear.innerHTML = "корзина пуста";
-    basket.contentAdd = basketclear;
+    basket.contentAdd = basket.getEmptyBasket();
     basket.deactivationBtn = true;
   } else {
     let indexProduct: number = 0;
@@ -144,7 +145,8 @@ events.on("basket:changed", () => {
       const cardBasketTemplateClone = cloneTemplate(cardBasketTemplate);
       const cardBasket = new CardBasket(cardBasketTemplateClone, {
         onClick: () => {
-          events.emit("basket:removeProductFromBasket", item);
+          events.emit("basket:removeProduct", item);
+          events.emit("basket:changed");
         },
       });
       indexProduct++;
@@ -153,16 +155,16 @@ events.on("basket:changed", () => {
     });
     basket.deactivationBtn = false;
   }
-  modalElement.classList.add("modal_active");
+  modal.open();
   modal.content = basket.render();
   header.counter = basketModel.getCount();
   
 });
 
-events.on("orderSalary:input", () => {
+events.on("modalSalary:open", () => {
   modal.clear();
   formOrderSalary.clear();
-  modalElement.classList.add("modal_active");
+  modal.open();
   modal.content = formOrderSalary.render();
 });
 
@@ -176,14 +178,17 @@ events.on("order: adressChange", () => {
   buyer.setBuyerAddress(formOrderSalary.addresOrder);
 });
 
+
+
 events.on("validationSalary:start", () => {
-  if (!buyer.getvalidation().payment && buyer.getvalidation().address === "") {
+  const validation = buyer.getvalidation();
+  if (!validation.payment && validation.address === "") {
     formOrderSalary.statusBtnNext(false);
     formOrderSalary.errors =
-      buyer.getvalidation().payment + buyer.getvalidation().address;
+      validation.payment + validation.address;
   } else {
     formOrderSalary.errors =
-      buyer.getvalidation().payment + buyer.getvalidation().address;
+      validation.payment + validation.address;
     formOrderSalary.statusBtnNext(true);
   }
 });
@@ -193,9 +198,9 @@ const formOrderContact = new FormOrderContact(
   events
 );
 
-events.on("orderContact:input", () => {
+events.on("modalContact:open", () => {
   modal.clear();
-  modalElement.classList.add("modal_active");
+  modal.open();
   modal.content = formOrderContact.render();
 });
 
@@ -208,15 +213,16 @@ events.on("order:phoneChange", () => {
 });
 
 events.on("validationContact:start", () => {
+  const validation = buyer.getvalidation();
   if (
-    buyer.getvalidation().email === "" &&
-    buyer.getvalidation().phone === ""
+    validation.email === "" &&
+    validation.phone === ""
   ) {
     formOrderContact.statusbtnPay(false);
     formOrderContact.errors = "";
   } else {
     formOrderContact.errors =
-      buyer.getvalidation().email + buyer.getvalidation().phone;
+      validation.email + validation.phone;
     formOrderContact.statusbtnPay(true);
   }
 });
@@ -236,10 +242,9 @@ events.on("order:pay", async () => {
         if (res) {
           orderSuccess.totalCost = res.total;
           basketModel.clearBasket();
-          modalElement.classList.add("modal_active");
+          modal.open();
           modal.content = orderSuccess.render();
           buyer.clearData();
-          
           formOrderContact.clear();
         } else {
           throw new Error("Пустой ответ от сервера");

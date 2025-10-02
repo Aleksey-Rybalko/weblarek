@@ -62,14 +62,4 @@ export class BasketModelWhithEvents extends BasketModel {
     this.events.emit("basket:changed");
     this.events.emit("modal:close");
   }
-
-  deleteProductFromBasket(productRem: IProduct): void {
-    super.deleteProductFromBasket(productRem);
-    this.events.emit("basket:changed");
-  }
-
-  deleteProductFromCard(productRem: IProduct): void {
-    super.deleteProductFromBasket(productRem);
-    this.events.emit("modal:close");
-  }
 }

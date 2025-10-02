@@ -36,7 +36,15 @@ export class Modal extends Component<IModal> {
     this.modalContent.append(item);
   }
 
-  clear() {
+  clear():void {
     this.modalContent.innerHTML = "";
+  }
+
+  open():void {
+    this.container.classList.add("modal_active");
+  }
+
+  close():void {
+    this.container.classList.remove("modal_active");
   }
 }

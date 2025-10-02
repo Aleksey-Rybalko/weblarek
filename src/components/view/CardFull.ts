@@ -41,6 +41,8 @@ export class CardFull extends Card {
 
     if (action?.onClick) {
       this.btnBuy.addEventListener("click", action.onClick);
+      
+
     }
   }
 

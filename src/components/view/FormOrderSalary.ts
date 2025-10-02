@@ -33,13 +33,13 @@ export class FormOrderSalary extends FormOrder {
       }
     });
 
-    this.adressInput.addEventListener("change", () => {
+    this.adressInput.addEventListener("input", () => {
       events.emit("order: adressChange", this.container);
     });
 
     this.btnNext.addEventListener("click", (event) => {
       event?.preventDefault();
-      events.emit("orderContact:input", this.container);
+      events.emit("modalContact:open", this.container);
     });
   }
 
