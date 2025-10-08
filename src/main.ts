@@ -18,8 +18,8 @@ import { cloneTemplate } from "./utils/utils.ts";
 import { OrderSuccess } from "./components/view/Order-success.ts";
 import { CardFull } from "./components/view/CardFull.ts";
 import { CardBasket } from "./components/view/CardBasket.ts";
-import { FormOrderSalary } from "./components/view/FormOrderSalary.ts";
-import { BuyerWhithEvent } from "./components/models/Buyer.ts";
+import { FormOrderSalary, PayMethodObj } from "./components/view/FormOrderSalary.ts";
+import { BuyerWhithEvent, BuyerValidationObj } from "./components/models/Buyer.ts";
 import { FormOrderContact } from "./components/view/FormOrderContact.ts";
 import { IOrder } from "./types/index.ts";
 
@@ -79,9 +79,8 @@ communication
   });
 
 events.on("modal:close", () => {
-  modal.close();
-  header.counter = basketModel.getCount();
   modal.clear();
+  modal.close();
 });
 
 
@@ -92,7 +91,6 @@ events.on("products:changed", () => {
     const cardGallery = new GalleryCard(cardTemplateClone, {
       onClick: () => {
         productsList.setActiveProduct(item);
-        events.emit("card:select", item);
       },
     });
     pageGallery.addItem(cardGallery.render(item));
@@ -100,17 +98,18 @@ events.on("products:changed", () => {
 });
 
 events.on("card:select", (item) => {
-  modal.clear();
+modal.clear();
   const activeProduct = productsList.getActiveProduct();
    if (!activeProduct) return;
-  const isInBasket: boolean =  !basketModel.hasProduct(activeProduct.id);
+  const isInBasket: boolean =  basketModel.hasProduct(activeProduct.id);
   const isAvailable = activeProduct.price !== null;
   const fullCardTemplate = cloneTemplate(fullCardContainer);
   const fullCard = new CardFull(fullCardTemplate, {
     onClick: () => {
       if (isAvailable) {
-        if (isInBasket) {
+        if (!isInBasket) {
           events.emit("basket:addProduct", activeProduct);
+          events.emit("modal:close");
         } else {
           events.emit("basket:removeProduct", activeProduct);
           events.emit("modal:close");
@@ -118,11 +117,12 @@ events.on("card:select", (item) => {
       }
     },
   });
-  fullCard.namingBtn = isInBasket ? "Купить" : "Удалить из корзины";
+  fullCard.namingBtn = !isInBasket ? "Купить" : "Удалить из корзины";
   if (!isAvailable) fullCard.deactivationBtn();
   modal.open();
   modal.content = fullCard.render(item);
 });
+
 
 events.on("basket:addProduct", (item) => {
   basketModel.setProductInBasket(item as IProduct);
@@ -134,63 +134,68 @@ events.on("basket:removeProduct", (item) => {
 
 events.on("basket:changed", () => {
   basket.clear();
-  modal.clear();
   basket.totalCost = basketModel.getCost();
   if (basketModel.getCount() === 0) {
     basket.contentAdd = basket.getEmptyBasket();
     basket.deactivationBtn = true;
   } else {
-    let indexProduct: number = 0;
-    basketModel.getProductArrayBasket().forEach((item) => {
+    basketModel.getProductArrayBasket().map((item, indexProduct) => {
       const cardBasketTemplateClone = cloneTemplate(cardBasketTemplate);
       const cardBasket = new CardBasket(cardBasketTemplateClone, {
         onClick: () => {
           events.emit("basket:removeProduct", item);
-          events.emit("basket:changed");
         },
       });
-      indexProduct++;
-      cardBasket.updateCardIndex = indexProduct;
+      cardBasket.updateCardIndex = indexProduct + 1;
       basket.contentAdd = cardBasket.render(item);
     });
     basket.deactivationBtn = false;
   }
+  header.counter = basketModel.getCount();
+});
+
+events.on("basket:open", () => {
+  modal.clear();
   modal.open();
   modal.content = basket.render();
-  header.counter = basketModel.getCount();
-  
 });
 
 events.on("modalSalary:open", () => {
   modal.clear();
-  formOrderSalary.clear();
   modal.open();
   modal.content = formOrderSalary.render();
 });
 
-events.on("order: selectPayMethod", (element: HTMLElement) => {
-  const method = element.getAttribute("name") as string;
-  formOrderSalary.selectedPayment = method;
-  buyer.setBuyerPayment(method as IPayment);
-});
 
-events.on("order: adressChange", () => {
-  buyer.setBuyerAddress(formOrderSalary.addresOrder);
-});
-
-
-
-events.on("validationSalary:start", () => {
-  const validation = buyer.getvalidation();
-  if (!validation.payment && validation.address === "") {
-    formOrderSalary.statusBtnNext(false);
+events.on("buyer:changed", (validationParameter:BuyerValidationObj) => {
+  const validationResult = buyer.getvalidation();
+  if (validationParameter.parameter === 'address' || validationParameter.parameter === 'payment') {
     formOrderSalary.errors =
-      validation.payment + validation.address;
-  } else {
-    formOrderSalary.errors =
-      validation.payment + validation.address;
-    formOrderSalary.statusBtnNext(true);
+      validationResult.payment +' '+ validationResult.address;
+  if (!validationResult.payment && validationResult.address === "") 
+    formOrderSalary.statusDisabledBtnNext(false);
+    else formOrderSalary.statusDisabledBtnNext(true);
+  } else{
+    formOrderContact.errors =
+      validationResult.email +' '+ validationResult.phone;
+  if (
+    validationResult.email === "" &&
+    validationResult.phone === ""
+  ) 
+    formOrderContact.statusDisabledbtnPay(false);
+   else     
+    formOrderContact.statusDisabledbtnPay(true);
   }
+});
+
+events.on("order:selectPayMethod", (payMethod: PayMethodObj) => {
+  formOrderSalary.selectedPayment = payMethod.method as string;
+  buyer.setBuyerPayment(payMethod.method as IPayment);
+  console.log(buyer.getBuyer)
+});
+
+events.on("order:adressChange", () => {
+  buyer.setBuyerAddress(formOrderSalary.addresOrder);
 });
 
 const formOrderContact = new FormOrderContact(
@@ -212,22 +217,8 @@ events.on("order:phoneChange", () => {
   buyer.setBuyerPhone(formOrderContact.phone);
 });
 
-events.on("validationContact:start", () => {
-  const validation = buyer.getvalidation();
-  if (
-    validation.email === "" &&
-    validation.phone === ""
-  ) {
-    formOrderContact.statusbtnPay(false);
-    formOrderContact.errors = "";
-  } else {
-    formOrderContact.errors =
-      validation.email + validation.phone;
-    formOrderContact.statusbtnPay(true);
-  }
-});
-
 events.on("order:pay", async () => {
+  console.log(buyer.getBuyer);
   try {
     if (buyer.getBuyer !== undefined) {
       const orderData: IOrder = {
@@ -242,10 +233,12 @@ events.on("order:pay", async () => {
         if (res) {
           orderSuccess.totalCost = res.total;
           basketModel.clearBasket();
+          modal.clear();
           modal.open();
           modal.content = orderSuccess.render();
           buyer.clearData();
           formOrderContact.clear();
+          formOrderSalary.clear();
         } else {
           throw new Error("Пустой ответ от сервера");
         }
@@ -255,3 +248,4 @@ events.on("order:pay", async () => {
     console.error("Ошибка при оформлении заказа:", error);
   }
 });
+

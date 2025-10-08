@@ -26,6 +26,7 @@ export class GalleryCard extends Card {
       ".card__image",
       this.container
     );
+    
     if (action?.onClick) {
       this.container.addEventListener("click", action.onClick);
     }

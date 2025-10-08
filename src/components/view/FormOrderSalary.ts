@@ -1,6 +1,11 @@
 import { FormOrder } from "./FormOrder";
 import { IEvents } from "../base/Events";
 import { ensureElement, ensureAllElements } from "../../utils/utils";
+import { IPayment } from "../../types";
+
+export interface PayMethodObj {
+  method: IPayment; 
+}
 
 export class FormOrderSalary extends FormOrder {
   private paymentButtons: HTMLButtonElement[];
@@ -25,16 +30,20 @@ export class FormOrderSalary extends FormOrder {
     this.paymentButtons.forEach((button) => {
       {
         button.addEventListener("click", (event: Event) => {
+          const element = event.currentTarget as HTMLElement;
+          const methodObj:PayMethodObj = {method: element.getAttribute("name") as IPayment};
           events.emit(
-            "order: selectPayMethod",
-            event.currentTarget as HTMLElement
+            "order:selectPayMethod",
+             methodObj
           );
         });
       }
     });
 
+    
+
     this.adressInput.addEventListener("input", () => {
-      events.emit("order: adressChange", this.container);
+      events.emit("order:adressChange", this.container);
     });
 
     this.btnNext.addEventListener("click", (event) => {
@@ -63,7 +72,7 @@ export class FormOrderSalary extends FormOrder {
     this.errorsContainer.textContent = error;
   }
 
-  statusBtnNext(value: boolean): void {
+  statusDisabledBtnNext(value: boolean): void {
     this.btnNext.disabled = value;
   }
 
@@ -73,5 +82,6 @@ export class FormOrderSalary extends FormOrder {
       button.classList.add("button_alt");
     });
     this.adressInput.value = "";
+    this.statusDisabledBtnNext(true);
   }
 }

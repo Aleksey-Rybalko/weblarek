@@ -27,7 +27,8 @@ export class Basket extends Component<IBasket> {
     );
 
     this.basketList.style.overflow = 'auto';
-    this.basketList.style.maxHeight = '600px'
+    this.basketList.style.maxHeight = '40vh'
+
     this.basketclear = createElement("p");
     this.basketclear.innerHTML = "корзина пуста";
 

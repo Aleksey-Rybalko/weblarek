@@ -48,12 +48,13 @@ export class FormOrderContact extends FormOrder {
     this.errorsContainer.textContent = error;
   }
 
-  statusbtnPay(value: boolean): void {
+  statusDisabledbtnPay(value: boolean): void {
     this.btnPay.disabled = value;
   }
 
   clear(): void {
     this.emailInput.value = "";
     this.phoneInput.value = "";
+    this.statusDisabledbtnPay(true);
   }
 }

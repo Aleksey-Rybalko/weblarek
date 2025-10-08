@@ -73,6 +73,10 @@ export class Buyer {
   }
 }
 
+export interface BuyerValidationObj {
+  parameter: string; 
+}
+
 export class BuyerWhithEvent extends Buyer {
   constructor(private events: IEvents) {
     super();
@@ -80,21 +84,25 @@ export class BuyerWhithEvent extends Buyer {
 
   setBuyerAddress(address: string): void {
     super.setBuyerAddress(address);
-    this.events.emit("validationSalary:start");
+    const validationObj: BuyerValidationObj = { parameter: 'address' };
+    this.events.emit("buyer:changed", validationObj);
   }
 
   setBuyerEmail(email: string): void {
     super.setBuyerEmail(email);
-    this.events.emit("validationContact:start");
+    const validationObj: BuyerValidationObj = { parameter: 'email' };
+    this.events.emit("buyer:changed", validationObj);
   }
 
   setBuyerPhone(phone: string): void {
     super.setBuyerPhone(phone);
-    this.events.emit("validationContact:start");
+    const validationObj: BuyerValidationObj = { parameter: 'phone' };
+    this.events.emit("buyer:changed", validationObj);
   }
 
   setBuyerPayment(payment: IPayment): void {
     super.setBuyerPayment(payment);
-    this.events.emit("validationSalary:start");
+    const validationObj: BuyerValidationObj = { parameter: 'payment' };
+    this.events.emit("buyer:changed", validationObj);
   }
 }

@@ -19,7 +19,6 @@ export class BasketModel {
     );
     if (index !== -1) {
       this.productArrayBasket.splice(index, 1);
-
       console.log(this.productArrayBasket);
     }
   }
@@ -54,12 +53,16 @@ export class BasketModelWhithEvents extends BasketModel {
 
   setProductInBasket(product: IProduct): void {
     super.setProductInBasket(product);
-    this.events.emit("modal:close");
+    this.events.emit("basket:changed");
   }
 
   clearBasket(): void {
     super.clearBasket();
     this.events.emit("basket:changed");
-    this.events.emit("modal:close");
+  }
+
+  deleteProductFromBasket(productRem: IProduct): void {
+    super.deleteProductFromBasket(productRem);
+    this.events.emit("basket:changed");
   }
 }

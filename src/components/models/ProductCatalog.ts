@@ -35,4 +35,9 @@ export class EventsProductCatalog extends ProductCatalog {
     super.setProductArray(productArray);
     this.events.emit("products:changed", this.productArray);
   }
+
+  setActiveProduct(product: IProduct): void {
+    super.setActiveProduct(product);
+    this.events.emit("card:select", product);
+  }
 }
